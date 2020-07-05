@@ -2,6 +2,7 @@ name: subatomic-build-releases
 
 on:
   push:
+    branches: master
 
 jobs:
 
@@ -15,6 +16,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          repository: Meshbits/komodo_dapps
+          ref: master
 
       - name: Docker Login
         uses: azure/docker-login@v1
@@ -26,7 +30,6 @@ jobs:
       - name: Pull Docker image
         run: |
           docker pull ${{ env.IMAGE_REPO }}
-
       - name: Run image (Build Linux)
         run: |
           nproc=$(cat /proc/cpuinfo | grep processor | wc -l)
@@ -34,7 +37,6 @@ jobs:
           docker exec -w /workspace ${{ env.CONTAINER_NAME }} g++ -c -std=c++17 -Wfatal-errors -Wall -Wextra -Werror subatomic_utils.cpp 
           docker exec -w /workspace ${{ env.CONTAINER_NAME }} gcc -Wall -Wextra -Wfatal-errors -o subatomic subatomic.c subatomic_utils.o -Iincludes -lstdc++ -lstdc++fs -lcurl -lm
           docker exec -w /workspace ${{ env.CONTAINER_NAME }} zip --junk-paths subatomic-linux subatomic
-
       - name: Upload subatomic-linux.zip as artifact
         uses: actions/upload-artifact@v1
         with:
@@ -48,20 +50,105 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          repository: Meshbits/komodo_dapps
+          ref: master
 
       - name: Install deps (macOS)
         run: |
           brew update
           brew install gcc@8
-
       - name: Build (macOS)
         run: |
           g++-8 -c -std=c++17 -Wfatal-errors -Wall -Wextra -Werror subatomic_utils.cpp
           gcc-8 -Wall -Wextra -Wfatal-errors -o subatomic subatomic.c subatomic_utils.o -Iincludes -lstdc++ -lstdc++fs -lcurl -lm
           zip --junk-paths subatomic-macOS subatomic
-
       - name: Upload subatomic-macOS.zip as artifact
         uses: actions/upload-artifact@v1
         with:
           name: subatomic-macOS
           path: ./subatomic-macOS.zip
+
+  publish-release:
+    name: Publishing CD releases
+    runs-on: ubuntu-latest
+    needs: [linux-build, macOS-build]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Download subatomic-linux.zip
+        uses: actions/download-artifact@v1
+        with:
+          name: subatomic-linux
+
+      - name: Download subatomic-macOS.zip
+        uses: actions/download-artifact@v1
+        with:
+          name: subatomic-macOS
+
+#      - name: Download subatomic-win.zip
+#        uses: actions/download-artifact@v1
+#        with:
+#          name: komodo-win
+
+      - name: Extract branch name
+        shell: bash
+        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        id: extract_branch
+
+      - name: Shortify commit sha
+        shell: bash
+        run: echo "##[set-output name=sha_short;]$(echo ${GITHUB_SHA::7})"
+        id: shortify_commit
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: release_buildv0.${{ github.run_number }}
+          release_name: release_buildv0.${{ github.run_number }}
+          body: |
+            CD Release
+            Github SHA: ${{ github.sha }}
+            Branch: ${{ steps.extract_branch.outputs.branch }}
+            Build number: ${{ github.run_number }}
+            version: v0.${{ github.run_number }}
+          draft: false
+          prerelease: true
+
+      - name: Upload Linux Release Asset
+        id: upload-linux-release-asset
+        uses: actions/upload-release-asset@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          asset_path: subatomic-linux/subatomic-linux.zip
+          asset_name: subatomic_linux_v0.${{ github.run_number }}.zip
+          asset_content_type: application/zip
+
+      - name: Upload macOS Release Asset
+        id: upload-macOS-release-asset
+        uses: actions/upload-release-asset@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: subatomic-macOS/subatomic-macOS.zip
+          asset_name: subatomic_macOS_v0.${{ github.run_number }}.zip
+          asset_content_type: application/zip
+
+#        - name: Upload Windows Release Asset
+#          id: upload-windows-release-asset
+#          uses: actions/upload-release-asset@latest
+#          env:
+#            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#          with:
+#            upload_url: ${{ steps.create_release.outputs.upload_url }}
+#            asset_path: subatomic-win/subatomic-win.zip
+#            asset_name: subatomic_win_v0.${{ github.run_number }}.zip
+#            asset_content_type: application/zip
