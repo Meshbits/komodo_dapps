@@ -49,6 +49,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Install deps (macOS)
+        run: |
+          brew update
+          brew upgrade
+          brew tap discoteq/discoteq; brew install flock
+          brew install autoconf autogen automake binutils \
+            gcc@8 protobuf coreutils wget python3
+
       - name: Build (macOS)
         run: |
           g++ -c -std=c++17 -Wfatal-errors -Wall -Wextra -Werror subatomic_utils.cpp
