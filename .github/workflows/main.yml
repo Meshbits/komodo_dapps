@@ -31,9 +31,8 @@ jobs:
         run: |
           nproc=$(cat /proc/cpuinfo | grep processor | wc -l)
           docker run -it -d --name ${{ env.CONTAINER_NAME }} -v $GITHUB_WORKSPACE:/workspace -w /workspace ${{ env.IMAGE_REPO }}
-          docker exec -w /workspace ${{ env.CONTAINER_NAME }} \ 
-            g++ -c -std=c++17 -Wfatal-errors -Wall -Wextra -Werror subatomic_utils.cpp \
-            gcc -Wall -Wextra -Wfatal-errors -o subatomic subatomic.c subatomic_utils.o -Iincludes -lstdc++ -lstdc++fs -lcurl -lm
+          docker exec -w /workspace ${{ env.CONTAINER_NAME }} g++ -c -std=c++17 -Wfatal-errors -Wall -Wextra -Werror subatomic_utils.cpp 
+          docker exec -w /workspace ${{ env.CONTAINER_NAME }} gcc -Wall -Wextra -Wfatal-errors -o subatomic subatomic.c subatomic_utils.o -Iincludes -lstdc++ -lstdc++fs -lcurl -lm
           docker exec -w /workspace ${{ env.CONTAINER_NAME }} zip --junk-paths subatomic-linux subatomic
 
       - name: Upload subatomic-linux.zip as artifact
