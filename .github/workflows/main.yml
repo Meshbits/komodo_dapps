@@ -40,3 +40,23 @@ jobs:
         with:
           name: subatomic-linux
           path: ./subatomic-linux.zip
+
+  macOS-build:
+    name: macOS-build
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Build (macOS)
+        run: |
+          g++ -c -std=c++17 -Wfatal-errors -Wall -Wextra -Werror subatomic_utils.cpp
+          gcc -Wall -Wextra -Wfatal-errors -o subatomic subatomic.c subatomic_utils.o -Iincludes -lstdc++ -lstdc++fs -lcurl -lm
+          zip --junk-paths subatomic-macOS subatomic
+
+      - name: Upload subatomic-macOS.zip as artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: subatomic-macOS
+          path: ./subatomic-macOS.zip
