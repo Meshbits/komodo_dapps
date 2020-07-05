@@ -1,0 +1,43 @@
+name: Komodo build releases
+
+on:
+  push:
+
+jobs:
+
+  linux-build:
+    name: linux-build
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_REPO: docker.pkg.github.com/meshbits/komodo/komodobuild_linux:latest
+      CONTAINER_NAME: komodobuild_linux
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Docker Login
+        uses: azure/docker-login@v1
+        with:
+          login-server: docker.pkg.github.com
+          username: $GITHUB_ACTOR
+          password: ${{ secrets.ns408_packages_token }}
+
+      - name: Pull Docker image
+        run: |
+          docker pull ${{ env.IMAGE_REPO }}
+
+      - name: Run image (Build Linux)
+        run: |
+          nproc=$(cat /proc/cpuinfo | grep processor | wc -l)
+          docker run -it -d --name ${{ env.CONTAINER_NAME }} -v $GITHUB_WORKSPACE:/workspace -w /workspace ${{ env.IMAGE_REPO }}
+          docker exec -w /workspace ${{ env.CONTAINER_NAME }} \ 
+            g++ -c -std=c++17 -Wfatal-errors -Wall -Wextra -Werror subatomic_utils.cpp \
+            gcc -Wall -Wextra -Wfatal-errors -o subatomic subatomic.c subatomic_utils.o -Iincludes -lstdc++ -lstdc++fs -lcurl -lm
+          docker exec -w /workspace ${{ env.CONTAINER_NAME }} zip --junk-paths subatomic-linux subatomic
+
+      - name: Upload subatomic-linux.zip as artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: subatomic-linux
+          path: ./subatomic-linux.zip
