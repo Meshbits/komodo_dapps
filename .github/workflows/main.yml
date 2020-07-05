@@ -1,4 +1,4 @@
-name: Komodo build releases
+name: subatomic-build-releases
 
 on:
   push:
