@@ -52,15 +52,12 @@ jobs:
       - name: Install deps (macOS)
         run: |
           brew update
-          brew upgrade
-          brew tap discoteq/discoteq; brew install flock
-          brew install autoconf autogen automake binutils \
-            gcc@8 protobuf coreutils wget python3
+          brew install gcc@8
 
       - name: Build (macOS)
         run: |
-          g++ -c -std=c++17 -Wfatal-errors -Wall -Wextra -Werror subatomic_utils.cpp
-          gcc -Wall -Wextra -Wfatal-errors -o subatomic subatomic.c subatomic_utils.o -Iincludes -lstdc++ -lstdc++fs -lcurl -lm
+          g++-8 -c -std=c++17 -Wfatal-errors -Wall -Wextra -Werror subatomic_utils.cpp
+          gcc-8 -Wall -Wextra -Wfatal-errors -o subatomic subatomic.c subatomic_utils.o -Iincludes -lstdc++ -lstdc++fs -lcurl -lm
           zip --junk-paths subatomic-macOS subatomic
 
       - name: Upload subatomic-macOS.zip as artifact
