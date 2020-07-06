@@ -27,8 +27,6 @@ cd "%ProjectFolder%"
 msbuild dapps_win.vcxproj || goto :error
 msbuild subatomic.vcxproj || goto :error
 
-x64\Debug\subatomic.exe PIRATE "" zVRSC || echo "Executing subatomic.exe"
-
 :error
 echo Failed with error #%errorlevel%.
 exit /b %errorlevel%
