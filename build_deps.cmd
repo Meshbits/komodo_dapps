@@ -1,7 +1,4 @@
 @echo on
-choco install windows-sdk-8.1
-refreshenv
-
 set ProjectFolder=%CD%
 mkdir %CD%\win_depends
 rem call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64 8.1
