@@ -134,7 +134,7 @@ jobs:
       - name: Download subatomic-win.zip
         uses: actions/download-artifact@v1
         with:
-          name: komodo-win
+          name: subatomic-win
 
       - name: Extract branch name
         shell: bash
