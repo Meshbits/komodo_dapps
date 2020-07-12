@@ -104,7 +104,8 @@ jobs:
           @echo on
           set ProjectFolder=%CD%
           :powershell Remove-Item –path "%ProjectFolder%\subatomic-win.zip" –recurse -Force
-          powershell Compress-Archive -Path "%ProjectFolder%\x64\Debug\subatomic.exe" -DestinationPath "%ProjectFolder%\subatomic-win.zip" -Force
+          :powershell Compress-Archive -Path "%ProjectFolder%\x64\Debug\subatomic.exe" -DestinationPath "%ProjectFolder%\subatomic-win.zip" -Force
+          powershell Compress-Archive -Path "%ProjectFolder%" -DestinationPath "%ProjectFolder%\subatomic-win.zip" -Force
 
       - name: Upload subatomic-win.zip as artifact
         uses: actions/upload-artifact@v1
